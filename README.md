@@ -13,9 +13,9 @@ twisted-bilayer-materials/
 ```
 
 ## References
-[1] Tarnopolsky, G., Kruchkov, A. J., & Vishwanath, A. (2019). Origin of magic angles in twisted bilayer graphene. Physical review letters, 122(10), 106405.
+[1] Tarnopolsky, G., Kruchkov, A. J., & Vishwanath, A. (2019). Origin of magic angles in twisted bilayer graphene. Physical review letters, 122(10), 106405. \\
 [2] Devakul, T., Crépel, V., Zhang, Y., & Fu, L. (2021). Magic in twisted transition metal dichalcogenide bilayers. Nature communications, 12(1), 6730.
 
-**Author**: Oscar Törnquist  
-**Contact**: tornquistoscar@gmail.com
+**Author**: Oscar Törnquist   \\
+**Contact**: tornquistoscar@gmail.com  \\
 **Last Updated**: August 2025
