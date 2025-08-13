@@ -1,14 +1,13 @@
-# Twisted Bilayer 2D Materials: Band Structure Calculations
+# Twisted bilayer 2D materials: Band structure calculations
 
-Implementation of continuum models for calculating the electronic band structures of Twisted Bilayer Graphene (TBG) and Transition Metal Dichalcogenide (TMD) heterostructures.
-This code reproduces the results presented in Ref. [1] for TBG and Ref. [2] for TMD, and can be adapted or extended for related studies.
+Implementation of continuum models for calculating the electronic band structures of Twisted Bilayer Graphene (TBG) and Transition Metal Dichalcogenide (TMD) heterostructures. This code reproduces the results presented in Ref. [1] for TBG and Ref. [2] for TMD, and can be adapted or extended for related studies.
 
 ## Repository Structure
 
 ```
 twisted-bilayer-materials/
-├── TBG_bands.py              # TBG model
-├── TMD_bands.py              # TMD model
+├── TBG_bands.py              # Code for TBG bands
+├── TMD_bands.py              # Code for TMD bands
 ├── band_structure_demo.ipynb # Interactive demonstration notebook
 └── README.md                 # This file
 ```
