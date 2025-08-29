@@ -20,7 +20,7 @@ class TwistedBilayerGraphene:
         self.w = np.exp(1.0j*2*np.pi/3)
         
         # Sublattice (symmetry-breaking) potential
-        self.m = 0.1
+        self.m = 0.0
         
         # Moiré lattice vectors
         self.g0 = self.ktheta*np.sqrt(3)
@@ -126,19 +126,67 @@ class TwistedBilayerGraphene:
 
         # Solve for band energies
         Ek = np.zeros((self.Nbands, Nk))
+        WF = np.zeros((self.Nbands, Nk, Nk))
         for nk in range(Nk):
-            Ek[:, nk], _ = self.solve_H(kvec[nk])
-
+            Ek[:, nk], WF = self.solve_H(kvec[nk])
+        
         # Brillouin zone tick marks (start of each segment)
         bz_points = [0, Nk1, Nk1 + Nk2, Nk]
 
-        return Ek, bz_points, Nk
+        return Ek, WF, bz_points, Nk
 
+    def compute_Chern_number_simple(self, band):
+        # Define k-grid in mBZ (map hexagon into square)
+        Nkx = 21  # Number of points in x direction
+        Nky = int(round(Nkx * 2.0 / np.sqrt(3)))  # Number of points in y direction
+        
+        kxvec = np.linspace(0.0, 1.0, Nkx) * self.g0
+        kyvec = np.linspace(-1.0, 0.5, Nky) * self.q0
+        
+        dkx = kxvec[1] - kxvec[0]
+        dky = kyvec[1] - kyvec[0]
+        
+        E = np.zeros((Nkx, Nky))
+        WF = np.zeros((self.Nbands, Nkx, Nky), dtype=complex)
+        
+        # Compute eigenvalues and eigenvectors
+        for nkx in range(Nkx):
+            for nky in range(Nky):
+                k = np.array([kxvec[nkx], kyvec[nky]])
+                E_hlp, WF_hlp = self.solve_H(k)
+                E[nkx, nky] = E_hlp[band]
+                WF[:, nkx, nky] = WF_hlp[:, band]
+        
+        # Compute Berry curvature
+        Berry_curvature = np.zeros((Nkx-1, Nky-1))
+        
+        for nkx in range(Nkx-1):
+            for nky in range(Nky-1):
+                # Overlap matrices
+                Ux = np.sum(np.conj(WF[:, nkx, nky]) * WF[:, nkx+1, nky])
+                Uy = np.sum(np.conj(WF[:, nkx, nky]) * WF[:, nkx, nky+1])
+                Uxy = np.sum(np.conj(WF[:, nkx+1, nky]) * WF[:, nkx+1, nky+1])
+                Uyx = np.sum(np.conj(WF[:, nkx, nky+1]) * WF[:, nkx+1, nky+1])
+                
+                # Wilson loop
+                Wloop = Ux * Uxy * np.conj(Uyx * Uy)
+                
+                # Ensure that the phase is between -pi and +pi
+                phase = np.angle(Wloop)
+                phase = np.mod(phase + np.pi, 2*np.pi) - np.pi
+                
+                Berry_curvature[nkx, nky] = phase / (dkx * dky)
+        
+        # Chern number
+        chernnum = np.sum(Berry_curvature) * dkx * dky / (2 * np.pi)
+        print(f"Chern number: {chernnum}")
+        
+        return chernnum
 
 def plot_single_bandstructure(degree_theta):
     """Plot band structure for a single twist angle"""
     tbg = TwistedBilayerGraphene(degree_theta)
-    Ek, bz_points, Nk = tbg.calculate_bandstructure()
+    Ek, WF, bz_points, Nk = tbg.calculate_bandstructure()
     
     # Select bands around Fermi level
     mid_band = tbg.Nbands // 2
@@ -184,7 +232,7 @@ def plot_multiple_bandstructures(angles):
         
         # Calculate band structure for this angle
         tbg = TwistedBilayerGraphene(degree_theta)
-        Ek, bz_points, Nk = tbg.calculate_bandstructure()
+        Ek, WF, bz_points, Nk = tbg.calculate_bandstructure()
         
         # Select bands around Fermi level
         mid_band = tbg.Nbands // 2
