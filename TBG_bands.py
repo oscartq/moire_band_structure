@@ -95,53 +95,13 @@ class TwistedBilayerGraphene:
         WF = eigenvectors
         return Ek, WF
     
-    def calculate_bandstructure(self):
-        """Calculate band structure along high-symmetry path: K' -> K -> Γ -> K'"""
-        # Segment lengths
-        Nk1 = 100
-        Nk2 = 100
-        Nk3 = 50
-        Nk = Nk1 + Nk2 + Nk3        
-        
-        # Initialize kvec as list of 2D points
-        kvec = []
-        
-        # Γ -> K (n from 0 to Nk1-1)
-        Kprime_1 = np.array([0.0, -2*self.ktheta])
-        Gamma_1 = np.array([0.0, 0.0])
-        for n in range(Nk1):
-            kvec.append(Kprime_1 + (Gamma_1 - Kprime_1) * (n / Nk1))
-
-        # K -> M (n from 0 to Nk2-1)
-        Gamma_2 = np.array([self.g0, 0.0])#np.array([self.ktheta, -(3/2)*self.ktheta])#
-        for n in range(Nk2):
-            kvec.append(Gamma_1  + (Gamma_2 - Gamma_1 ) * (n / Nk2))
-        
-        # M -> Γ (n from 0 to Nk3-1)
-        Kprime_2 = np.array([self.g0, self.ktheta])
-        for n in range(Nk3):
-            kvec.append(Gamma_2 + (Kprime_2 - Gamma_2) * (n / Nk3))
-                
-        kvec = np.array(kvec)  # Now kvec has shape (Nk, 2)
-
-        # Solve for band energies
-        Ek = np.zeros((self.Nbands, Nk))
-        WF = np.zeros((self.Nbands, Nk, Nk))
-        for nk in range(Nk):
-            Ek[:, nk], WF = self.solve_H(kvec[nk])
-        
-        # Brillouin zone tick marks (start of each segment)
-        bz_points = [0, Nk1, Nk1 + Nk2, Nk]
-
-        return Ek, WF, bz_points, Nk
-
-    def compute_Chern_number_simple(self, band):
+    def compute_Chern_number(self, band):
         # Define k-grid in mBZ (map hexagon into square)
         Nkx = 21  # Number of points in x direction
         Nky = int(round(Nkx * 2.0 / np.sqrt(3)))  # Number of points in y direction
         
         kxvec = np.linspace(0.0, 1.0, Nkx) * self.g0
-        kyvec = np.linspace(-1.0, 0.5, Nky) * self.q0
+        kyvec = np.linspace(-2, 1.0, Nky) * self.ktheta
         
         dkx = kxvec[1] - kxvec[0]
         dky = kyvec[1] - kyvec[0]
@@ -182,6 +142,49 @@ class TwistedBilayerGraphene:
         print(f"Chern number: {chernnum}")
         
         return chernnum
+
+    def calculate_bandstructure(self):
+        """Calculate band structure along high-symmetry path: K' -> K -> Γ -> K'"""
+        # Segment lengths
+        Nk1 = 100
+        Nk2 = 100
+        Nk3 = 50
+        Nk = Nk1 + Nk2 + Nk3        
+        
+        # Initialize kvec as list of 2D points
+        kvec = []
+        
+        # Γ -> K (n from 0 to Nk1-1)
+        Kprime_1 = np.array([0.0, -2*self.ktheta])
+        Gamma_1 = np.array([0.0, 0.0])
+        for n in range(Nk1):
+            kvec.append(Kprime_1 + (Gamma_1 - Kprime_1) * (n / Nk1))
+
+        # K -> M (n from 0 to Nk2-1)
+        Gamma_2 = np.array([self.g0, 0.0])#np.array([self.ktheta, -(3/2)*self.ktheta])#
+        for n in range(Nk2):
+            kvec.append(Gamma_1  + (Gamma_2 - Gamma_1 ) * (n / Nk2))
+        
+        # M -> Γ (n from 0 to Nk3-1)
+        Kprime_2 = np.array([self.g0, self.ktheta])
+        for n in range(Nk3):
+            kvec.append(Gamma_2 + (Kprime_2 - Gamma_2) * (n / Nk3))
+                
+        kvec = np.array(kvec)  # Now kvec has shape (Nk, 2)
+
+        # Solve for band energies
+        Ek = np.zeros((self.Nbands, Nk))
+        WF = np.zeros((self.Nbands, Nk, Nk))
+        Chern_num = np.zeros(self.Nbands)
+        for nk in range(Nk):
+            Ek[:, nk], WF = self.solve_H(kvec[nk])
+            # Chern_num = self.compute_Chern_number()
+        
+        # Brillouin zone tick marks (start of each segment)
+        bz_points = [0, Nk1, Nk1 + Nk2, Nk]
+
+        return Ek, Chern_num, bz_points, Nk
+
 
 def plot_single_bandstructure(degree_theta):
     """Plot band structure for a single twist angle"""

@@ -118,7 +118,7 @@ class TransitionMetalDichalcogenides:
     def calculate_bandstructure(self):
         """Calculate band structure along high-symmetry path"""
         # Brillouin zone path Γ -> K -> M -> Γ
-        # number of points on each segment (matching Julia reference)
+        # number of points on each segment
         Nk1 = 100
         Nk2 = 50
         Nk3 = 100
@@ -147,23 +147,62 @@ class TransitionMetalDichalcogenides:
         Ek = np.zeros((self.Nbands, Nk))
         for nk in range(Nk):
             k = kvec[nk, :]  # Extract 2D k-point
-            Ek[:, nk], _ = self.solve_H(k)
+            Ek[:, nk], WF = self.solve_H(k)
             
         # Return band structure data
         bz_points = [0, Nk1, Nk1 + Nk2, Nk]
 
-        return Ek, bz_points, Nk
+        return Ek, WF, bz_points, Nk
+    
+    def compute_Chern_number(self, band):
+        Nkx = 21 # Number of points in x direction
+        Nky = 21
 
+        dkx = 1/(Nkx)
+        dky = 1/(Nky)
+
+        WF = np.zeros((self.Nbands, Nkx, Nky), dtype=complex)
+        for nkx in range(Nkx):
+            tx = nkx / (Nkx - 1)
+            for nky in range(Nky):
+                ty = nky / (Nky - 1)
+                k = tx * self.g1 + ty * self.g2  # 2D vector
+                
+                _, WF_hlp = self.solve_H(k)
+                WF[:,nkx,nky] = WF_hlp[:,band]
+
+        Berry_curvature = np.zeros((Nkx - 1, Nky - 1))
+        for nkx in range(Nkx - 1):
+            for nky in range(Nky - 1):
+                Ux  = np.vdot(WF[:, nkx, nky], WF[:, nkx + 1, nky])     
+                Uy  = np.vdot(WF[:, nkx, nky], WF[:, nkx, nky + 1])
+                Uxy = np.vdot(WF[:, nkx + 1, nky], WF[:, nkx + 1, nky + 1])
+                Uyx = np.vdot(WF[:, nkx, nky + 1], WF[:, nkx + 1, nky + 1])
+                
+                # Ensure phase ∈ [-π, π]
+                phase = np.angle(Ux * Uxy * np.conj(Uyx * Uy))
+                phase = (phase + np.pi) % (2.0 * np.pi) - np.pi
+
+                Berry_curvature[nkx, nky] = phase #* (dkx * dky) #if you want normalization
+
+        chernnum = np.sum(Berry_curvature) / (2 * np.pi) #* dkx * dky 
+
+        print(f"Chern number: {chernnum}")
+        
+        return chernnum
+    
 def plot_single_bandstructure(degree_theta):
     """Plot band structure for a single twist angle"""
     tmd = TransitionMetalDichalcogenides(degree_theta)
-    Ek, bz_points, Nk = tmd.calculate_bandstructure()
+    Ek, WF, bz_points, Nk = tmd.calculate_bandstructure()
     
     # Plot first 15 bands with negative energies in meV
     plt.figure(figsize=(4, 8))
     for n in range(15):  # First 15 bands
         plt.plot(range(1, Nk + 1), -Ek[n, :] * 1e3)  # Convert to meV and negate
-    
+        
+        c = tmd.compute_Chern_number(n) #tmd.compute_Chern_number(Ek[n], WF[:, n])
+
     # BZ point labels
     labels = ["$\gamma$", "$k_+$", "m", "$\gamma$"]
     
@@ -177,7 +216,7 @@ def plot_single_bandstructure(degree_theta):
     
     # Set limits
     plt.xlim(0, Nk)
-    plt.ylim(0, 40)  # 0 to 40 meV as in Julia reference
+    plt.ylim(0, 40)
     
     plt.ylabel("Energy (meV)")
     plt.title(rf"$\theta$={degree_theta}$^\circ$")
@@ -200,11 +239,11 @@ def plot_multiple_bandstructures(angles):
         tmd = TransitionMetalDichalcogenides(degree_theta)
         Ek, bz_points, Nk = tmd.calculate_bandstructure()
        
-        # Plot first 15 bands with negative energies in meV (matching your single plot function)
-        for n in range(25):  # First 15 bands
+        # Plot first 25 bands with negative energies in meV (matching your single plot function)
+        for n in range(25):  # First 25 bands
             ax.plot(range(1, Nk + 1), -Ek[n, :] * 1e3)  # Convert to meV and negate
        
-        # BZ point labels (matching your TMD system)
+        # BZ point labels
         labels = ["$\gamma$", "$k_+$", "m", "$\gamma$"]
        
         # Vertical dotted lines at BZ points (except start and end)
@@ -217,7 +256,7 @@ def plot_multiple_bandstructures(angles):
        
         # Set limits (matching your single plot function)
         ax.set_xlim(0, Nk)
-        ax.set_ylim(0, 40)  # 0 to 40 meV as in your reference
+        ax.set_ylim(0, 40)
        
         # Labels and title
         if idx == 0:  # Only add y-label to leftmost plot
@@ -227,3 +266,7 @@ def plot_multiple_bandstructures(angles):
     plt.tight_layout()
     plt.show()
 
+plot_single_bandstructure(1.0)
+
+# tmd = TransitionMetalDichalcogenides(1.0)
+# Ek, WF, bz_points, Nk = tmd.calculate_bandstructure()
