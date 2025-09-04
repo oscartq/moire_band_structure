@@ -37,7 +37,7 @@ class TwistedBilayerGraphene:
         # Map band index to the generators n1, n2
         self.map_zf_idx = list(itertools.product(range(-self.Nshells, self.Nshells+1), 
                                                 range(-self.Nshells, self.Nshells+1)))
-        self.Nbands = self.Nzf * 4  # 2 layers * 2 sublattices
+        self.Nbands = self.Nzf * 2 * 2  # 2 layers * 2 sublattices
 
     def compute_H(self, k):
         """Compute Hamiltonian matrix for given k-point"""
