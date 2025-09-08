@@ -335,6 +335,7 @@ def plot_multiple_bandstructures(angles, chern_bands=None):
 
     return chern_map
 
+# Uncomment the ones that you want to use. First the degree of twist angle and then the bands which you want the chern number of.
 #plot_single_bandstructure(1.0,[0, 1])
 
-plot_multiple_bandstructures([1.0, 1.43, 1.67, 2.5], chern_bands=[0, 1])
+#plot_multiple_bandstructures([1.0, 1.43, 1.67, 2.5], chern_bands=[0, 1])
