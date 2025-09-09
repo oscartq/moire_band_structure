@@ -8,7 +8,8 @@ Implementation of continuum models for calculating the electronic band structure
 twisted-bilayer-materials/
 ├── TBG_bands.py              # Code for TBG bands
 ├── TMD_bands.py              # Code for TMD bands
-├── band_structure_demo.ipynb # Interactive demonstration notebook
+├── band_structure_demo.ipynb # Interactive demonstration notebook for band structure calculation of TBG and TMD
+├── demo_berry_curvature.ipynb # Interactive demonstration notebook for berry curvature calculations for TMD
 └── README.md                 # This file
 ```
 
